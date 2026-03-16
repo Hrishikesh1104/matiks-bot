@@ -311,6 +311,5 @@ int main() {
         case 8: cout << "Bot for this mode is coming soon!" << endl; break;
     }
 
-
     return 0;
 }
