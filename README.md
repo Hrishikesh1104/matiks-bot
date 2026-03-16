@@ -1,6 +1,6 @@
 # Matiks Math Sprint Bot 🤖
 
-An automated bot for the [Matiks](https://matiks.in) Math Sprint mode that automatically detects, solves, and types answers to math questions in real time during a 1v1 duel.
+An automated bot for the [Matiks](https://matiks.in) Math Sprint Duels/Math Fastest Finger First Duels that automatically detects, solves, and types answers to math questions in real time during a 1v1 duel.
 
 ---
 
@@ -17,7 +17,7 @@ Step 4 → Type the answer
 
 Before the game starts, the bot **automatically detects the question region** on screen using two reference points:
 - The **"Cancel Search"** button on the searching screen → gives the bottom boundary
-- The **"01:04" blue timer** on the countdown screen → gives the top boundary
+- The **"01:04" timer** on the countdown screen → gives the top boundary
 
 This makes the bot work on **any Mac screen size** without any hardcoded coordinates.
 
@@ -27,7 +27,7 @@ This makes the bot work on **any Mac screen size** without any hardcoded coordin
 
 - ✅ Dynamically detects question region — works on any Mac screen size
 - ✅ Supports addition, subtraction, multiplication and division
-- ✅ Handles multi-line questions (e.g. 5 numbers stacked vertically)
+- ✅ Handles multi-line any complex calculations (e.g. 6 numbers stacked vertically)
 - ✅ Handles OCR misreading ÷ as + intelligently
 - ✅ Auto-retries if stuck on the same question
 - ✅ Runs for the full 60 second match duration
@@ -99,10 +99,10 @@ All coordinates are divided by 2 to account for Mac's **Retina display** (2x pix
 
 Questions appear vertically like this:
 ```
-  56
-+40
--56
-+45
+ 156
++240
+-456
++445
 ```
 
 The bot:
