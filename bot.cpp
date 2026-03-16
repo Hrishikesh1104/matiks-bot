@@ -14,6 +14,12 @@ struct BoundingBox {
     bool found;
 };
 
+// Open url
+void openURL(string url) {
+    string cmd = "osascript -e 'tell application \"Google Chrome\" to open location \"" + url + "\"'";
+    system(cmd.c_str());
+}
+
 // STEP 1 - Take screenshot
 void takeScreenshot(BoundingBox box) {
 
@@ -180,13 +186,12 @@ BoundingBox detectQuestionRegion() {
     };
 }
 
-//----------------------------
-// Main
-//----------------------------
-int main() {
-    cout << "Starting bot in 5 seconds... Switch to Matiks!" << endl;
 
-    cout<<"Waiting for the coords of bounding box\n";
+//----------------------------
+// Math bot
+//----------------------------
+void runMathBot(){
+    cout<<"Waiting for the coordinates of bounding box\n";
     BoundingBox box = {0, 0, 0, 0, false};
     while(!box.found){
         box = detectQuestionRegion();
@@ -194,9 +199,9 @@ int main() {
             this_thread::sleep_for(chrono::milliseconds(500));
         }
     }
-    cout<<"Coords found\n";
+    cout<<"Coordinates found\n";
     
-    this_thread::sleep_for(chrono::milliseconds(2000));
+    this_thread::sleep_for(chrono::milliseconds(3000));
     
     auto start = chrono::steady_clock::now();
     vector<string> lastLines;
@@ -205,7 +210,7 @@ int main() {
     while (true) {
         auto now = chrono::steady_clock::now();
         int elapsed = chrono::duration_cast<chrono::seconds>(now - start).count();
-        if (elapsed >= 61) break;
+        if (elapsed >= 60) break;
     
         // Step 1
         takeScreenshot(box);
@@ -232,7 +237,7 @@ int main() {
             typeAnswer(answer);
             sameQuestionCount = 0;
             lastLines.clear();
-            this_thread::sleep_for(chrono::milliseconds(2000));
+            this_thread::sleep_for(chrono::milliseconds(2300));
             continue;
         }
     
@@ -245,8 +250,67 @@ int main() {
     
         cout << ": Answer = " << answer << endl;
     
-        this_thread::sleep_for(chrono::milliseconds(2000));
+        this_thread::sleep_for(chrono::milliseconds(2300));
     }
+}
+
+//----------------------------
+// Main
+//----------------------------
+int main() {
+
+    cout << "\n=============================\n";
+    cout << "     MATIKS BOT LAUNCHER\n";
+    cout << "=============================\n";
+    cout << "1. Online Duels (Math Sprint)\n";
+    cout << "2. Fastest Fingers Duels\n";
+    cout << "3. Cross Math Duels\n";
+    cout << "4. Ken Ken Duels\n";
+    cout << "5. Math Maze Duels\n";
+    cout << "6. Flash Anzan\n";
+    cout << "7. Mindsnap Online\n";
+    cout << "8. Ability Duels\n";
+    cout << "=============================\n";
+    cout << "Enter your choice (1-8): ";
+
+    int choice;
+    cin >> choice;
+
+    string url = "";
+    switch (choice) {
+        case 1: url = "https://www.matiks.in/search?gameType=DMAS&gameMode=ONLINE_SEARCH&timeLimit=1"; break;
+        case 2: url = "https://www.matiks.in/search?gameType=FASTEST_FINGER&gameMode=ONLINE_SEARCH&timeLimit=1"; break;
+        case 3: url = "https://www.matiks.in/search?gameType=CROSS_MATH_PUZZLE&gameMode=ONLINE_SEARCH&timeLimit=2"; break;
+        case 4: url = "https://www.matiks.in/search?gameType=KEN_KEN_PUZZLE&gameMode=ONLINE_SEARCH&timeLimit=2"; break;
+        case 5: url = "https://www.matiks.in/search?gameType=MATH_MAZE_PUZZLE&gameMode=ONLINE_SEARCH&timeLimit=2"; break;
+        case 6: url = "https://www.matiks.in/search?gameType=FLASH_ANZAN&gameMode=ONLINE_SEARCH&timeLimit=1.5"; break;
+        case 7: url = "https://www.matiks.in/search?gameType=MIND_SNAP&gameMode=ONLINE_SEARCH&timeLimit=1"; break;
+        case 8: url = "https://www.matiks.in/search?gameType=DMAS_ABILITY&gameMode=ONLINE_SEARCH&timeLimit=2"; break;
+        default:
+            cout << "Invalid choice!" << endl;
+            return 1;
+    }
+
+    cout << "Opening game mode..." << endl;
+    openURL(url);
+
+    switch (choice) {
+        case 1:
+            cout << "Starting Math Bot..." << endl;
+            runMathBot();
+            break;
+        case 2:
+            cout << "Starting Math Bot..." << endl;
+            runMathBot();
+            break;
+        case 3: cout << "Bot for this mode is coming soon!" << endl; break;
+        case 4: cout << "Bot for this mode is coming soon!" << endl; break;
+        case 5: cout << "Bot for this mode is coming soon!" << endl; break;
+        case 6: cout << "Bot for this mode is coming soon!" << endl; break;
+        case 7: cout << "Bot for this mode is coming soon!" << endl; break;
+        case 8: cout << "Bot for this mode is coming soon!" << endl; break;
+    }
+
 
     return 0;
 }
