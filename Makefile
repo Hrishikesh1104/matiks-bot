@@ -1,5 +1,5 @@
 all:
-	g++ -o bot main.cpp MatiksBot.cpp MathBot.cpp MindSnapBot.cpp
+	g++ -o bot main.cpp src/MatiksBot.cpp src/MathBot.cpp src/MindSnapBot.cpp -I include/
 
 clean:
 	rm -f bot

@@ -1,4 +1,4 @@
-#include "MatiksBot.h"
+#include "../include/MatiksBot.h"
 
 void MatiksBot::openURL(string url) {
     string cmd = "osascript -e 'tell application \"Google Chrome\" to open location \"" + url + "\"'";
@@ -30,13 +30,13 @@ void MatiksBot::clearInput() {
 }
 
 bool MatiksBot::shouldMakeError() {
-    return (rand() % 10) == 0;
+    return (rand() % 20) == 0;
 }
 
 string MatiksBot::generateWrongAnswer(string &correctAnswer) {
     int correct = stoi(correctAnswer);
     
-    int error = (rand() % 10) + 1;
+    int error = (rand() % 15) + 1;
     
     if (rand() % 2 == 0) correct += error;
     else correct -= error;
@@ -54,7 +54,7 @@ void MatiksBot::typeAnswer(string answer) {
         // ~7% chance of making a typo
         if (rand() % 15 == 0) {
             // type a random wrong character
-            char wrongChar = '0' + (rand() % 10);
+            char wrongChar = '0' + (rand() % 20);
             string wrongCmd = "osascript -e 'tell application \"System Events\" to keystroke \"" + string(1, wrongChar) + "\"'";
             system(wrongCmd.c_str());
 

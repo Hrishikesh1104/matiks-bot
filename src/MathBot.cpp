@@ -1,4 +1,4 @@
-#include "MathBot.h"
+#include "../include/MathBot.h"
 
 vector<string> MathBot::readOCROutput() {
     vector<string> lines;
@@ -126,7 +126,6 @@ void MathBot::runBot() {
         if (sameQuestionCount >= 3) {
             string answer = solve(lines, sameQuestionCount);
             clearInput();
-            humanReactionDelay();
             typeAnswer(answer);
             sameQuestionCount = 0;
             lastLines.clear();
@@ -139,12 +138,10 @@ void MathBot::runBot() {
             string wrongAnswer = generateWrongAnswer(answer);
             cout << "Making intentional error: " << wrongAnswer << endl;
             clearInput();
-            humanReactionDelay();
             typeAnswer(wrongAnswer);
             this_thread::sleep_for(chrono::milliseconds(500));
 
             clearInput();
-            humanReactionDelay();
             typeAnswer(answer);
         } 
         else {
