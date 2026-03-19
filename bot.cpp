@@ -39,9 +39,9 @@ void runOCR(BoundingBox box) {
     string sipsCmd = "sips -z " + to_string(scaledH) + " " + to_string(scaledW) + " question.png --out question_large.png";
     system(sipsCmd.c_str());
     
-    system("sips -s format png question_large.png --out question_large.png");
+    system("convert question_large.png -brightness-contrast 0x80 question_large.png 2>/dev/null");
     
-    system("tesseract question_large.png output -l eng --psm 6 --oem 3 -c tessedit_char_whitelist=0123456789+-x/");
+    system("tesseract question_large.png output -l eng --psm 11 --oem 3 -c tessedit_char_whitelist=0123456789+-x/");
 }
 
 // STEP 2 - Read OCR output into vector
@@ -121,8 +121,14 @@ void clearInput() {
     system("osascript -e 'tell application \"System Events\" to key code 51'");
 }
 
+// questions region detection required coordinates
+int timerY  = -1;
+int cancelX = -1;
+int cancelY = -1;
+int cancelW = -1;
+
 // Detect the Questions Region
-BoundingBox detectQuestionRegion() {
+BoundingBox detectQuestionRegion(bool updateCancel = true) {
 
     system("screencapture fullscreen.png");
 
@@ -136,11 +142,6 @@ BoundingBox detectQuestionRegion() {
 
     string line;
     getline(file, line); 
-
-    static int timerY  = -1;
-    static int cancelX = -1;
-    static int cancelY = -1;
-    static int cancelW = -1;
 
     while (getline(file, line)) {
         stringstream ss(line);
@@ -158,13 +159,16 @@ BoundingBox detectQuestionRegion() {
         int top   = stoi(cols[7]) / 2;
         int width = stoi(cols[8]) / 2;
 
-        if (text.find("01:0") != string::npos ||
-            text.find("00:")  != string::npos) {
+        if (text == "01:04" || 
+            text == "01:03" || 
+            text == "01:02" || 
+            text == "01:01" || 
+            text == "01:00") {
             timerY = top;
             cout << ">>> Timer found! timerY=" << timerY << endl;
         }
 
-        if (text == "Cancel") {
+        if (updateCancel && text == "Cancel") {
             cancelX = left;
             cancelY = top;
             cancelW = width;
@@ -187,13 +191,86 @@ BoundingBox detectQuestionRegion() {
 }
 
 
+
+
+
+vector<pair<int, int>> decideNextGame() {
+
+    system("screencapture fullscreen.png");
+
+    system("tesseract fullscreen.png fulloutput tsv 2>/dev/null");
+
+    ifstream file("fulloutput.tsv");
+    if (!file.is_open()) {
+        cout << "ERROR: Could not open fulloutput.tsv!" << endl;
+        return {{-1, -1}, {-1, -1}};
+    }
+
+    string line;
+    getline(file, line); 
+
+    static int rematchX = -1;
+    static int rematchY = -1;
+    static int newGameX = -1;
+    static int newGameY = -1;
+
+    while (getline(file, line)) {
+        stringstream ss(line);
+        vector<string> cols;
+        string col;
+        while (getline(ss, col, '\t')) {
+            cols.push_back(col);
+        }
+
+        if (cols.size() < 12) continue;
+        if (cols[0] != "5") continue;
+
+        string text = cols[11];
+        transform(text.begin(), text.end(), text.begin(), ::tolower);
+        int left  = stoi(cols[6]) / 2;
+        int top   = stoi(cols[7]) / 2;
+        int width = stoi(cols[8]) / 2;
+
+        if (text.find("rematch") != string::npos) {
+            rematchX = left;
+            rematchY = top;
+            cout << ">>> Rematch found! rematchX= " << rematchX << " rematchY= " << rematchY<<endl;
+        }
+
+        if (text.find("new") != string::npos) {
+            newGameX = left;
+            newGameY = top;
+            cout << ">>> Rematch found! newGameX= " << newGameX << " newGameY= " << newGameY<<endl;
+        }
+    }
+
+    if (rematchX == -1 || rematchY == -1 || newGameX == -1 || newGameY == -1) {
+        cout << "rematchX= " << rematchX << " rematchY= " << rematchY << " newGameX= " << newGameX << " newGameY= " << newGameY << endl;
+        return {{rematchX, rematchY}, {newGameX, newGameY}};
+    }
+
+    return {{rematchX+10, rematchY+10}, {newGameX+10, newGameY+10}};
+}
+
+
+
+
+
+
 //----------------------------
 // Math bot
 //----------------------------
 void runMathBot(){
     cout<<"Waiting for the coordinates of bounding box\n";
-    BoundingBox box = {0, 0, 0, 0, false};
+    // Reset bounding box values for new match
+    timerY  = -1;
+    auto start = chrono::steady_clock::now();
+
+    BoundingBox box = detectQuestionRegion();
     while(!box.found){
+        auto now = chrono::steady_clock::now();
+        int elapsed = chrono::duration_cast<chrono::seconds>(now - start).count();
+        if (elapsed >= 15) return ;
         box = detectQuestionRegion();
         if(!box.found){
             this_thread::sleep_for(chrono::milliseconds(500));
@@ -203,7 +280,7 @@ void runMathBot(){
     
     this_thread::sleep_for(chrono::milliseconds(3000));
     
-    auto start = chrono::steady_clock::now();
+    start = chrono::steady_clock::now();
     vector<string> lastLines;
     int sameQuestionCount = 0;
     
@@ -237,7 +314,7 @@ void runMathBot(){
             typeAnswer(answer);
             sameQuestionCount = 0;
             lastLines.clear();
-            this_thread::sleep_for(chrono::milliseconds(2300));
+            this_thread::sleep_for(chrono::milliseconds(2600));
             continue;
         }
     
@@ -250,7 +327,7 @@ void runMathBot(){
     
         cout << ": Answer = " << answer << endl;
     
-        this_thread::sleep_for(chrono::milliseconds(2300));
+        this_thread::sleep_for(chrono::milliseconds(2600));
     }
 }
 
@@ -294,15 +371,141 @@ int main() {
     cout << "Opening game mode..." << endl;
     openURL(url);
 
+    bool opponentAccepted = true;
     switch (choice) {
+        int val;
         case 1:
-            cout << "Starting Math Bot..." << endl;
-            runMathBot();
+            do{
+                if(opponentAccepted){
+                    runMathBot();
+                    this_thread::sleep_for(chrono::milliseconds(500));
+                    opponentAccepted = false;
+                    system("open -a 'Visual Studio Code'");
+                    cout << "\n1. Rematch \n2. New game \n3. Exit\n";
+                    cin >> val;
+                    system("open -a 'Google Chrome'");
+                    this_thread::sleep_for(chrono::milliseconds(1000));
+                }
+
+                if(val == 3) break;
+                else if(val == 1 || val == 2){
+                    this_thread::sleep_for(chrono::milliseconds(1000));
+                    vector<pair<int, int>> newGameXY = decideNextGame();
+                    if(val == 1){
+                        if(newGameXY[0].first == -1 || newGameXY[0].second == -1) break;
+                        string cmd = "cliclick c:" + to_string(newGameXY[0].first) + "," + to_string(newGameXY[0].second);
+                        system(cmd.c_str());
+                        system(cmd.c_str());
+
+                        timerY  = -1;
+                        auto start = chrono::steady_clock::now();
+
+                        while(true) {
+                            auto now = chrono::steady_clock::now();
+                            int elapsed = chrono::duration_cast<chrono::seconds>(now - start).count();
+                            
+                            if(elapsed >= 10) {
+                                cout << "Opponent didn't accept rematch!" << endl;
+                                break;
+                            }
+                            
+                            BoundingBox box = detectQuestionRegion(false);
+                            
+                            if(box.found) {
+                                cout << "Opponent accepted rematch! Starting bot..." << endl;
+                                opponentAccepted = true;
+                                break;
+                            }
+                            
+                            this_thread::sleep_for(chrono::milliseconds(500));
+                        }
+
+                        if (!opponentAccepted) {
+                            system("open -a 'Visual Studio Code'");
+                            cout << "\n1. Rematch \n2. New game \n3. Exit\n";
+                            cin >> val;
+                            system("open -a 'Google Chrome'");
+                            this_thread::sleep_for(chrono::milliseconds(1000));
+                        }
+                    }
+                    else{
+                        if(newGameXY[1].first == -1 || newGameXY[1].second == -1) break;
+                        string cmd = "cliclick c:" + to_string(newGameXY[1].first) + "," + to_string(newGameXY[1].second);
+                        system(cmd.c_str());
+                        system(cmd.c_str());
+                        opponentAccepted = true;
+                    }
+                }
+                else cout<<"Invalid choice!"<<endl;
+            } while(val == 1 || val == 2);
             break;
+
         case 2:
-            cout << "Starting Math Bot..." << endl;
-            runMathBot();
+            do{
+                if(opponentAccepted){
+                    runMathBot();
+                    this_thread::sleep_for(chrono::milliseconds(500));
+                    opponentAccepted = false;
+                    system("open -a 'Visual Studio Code'");
+                    cout << "\n1. Rematch \n2. New game \n3. Exit\n";
+                    cin >> val;
+                    system("open -a 'Google Chrome'");
+                    this_thread::sleep_for(chrono::milliseconds(1000));
+                }
+
+                if(val == 3) break;
+                else if(val == 1 || val == 2){
+                    this_thread::sleep_for(chrono::milliseconds(1000));
+                    vector<pair<int, int>> newGameXY = decideNextGame();
+                    if(val == 1){
+                        if(newGameXY[0].first == -1 || newGameXY[0].second == -1) break;
+                        string cmd = "cliclick c:" + to_string(newGameXY[0].first) + "," + to_string(newGameXY[0].second);
+                        system(cmd.c_str());
+                        system(cmd.c_str());
+
+                        timerY  = -1;
+                        auto start = chrono::steady_clock::now();
+
+                        while(true) {
+                            auto now = chrono::steady_clock::now();
+                            int elapsed = chrono::duration_cast<chrono::seconds>(now - start).count();
+                            
+                            if(elapsed >= 10) {
+                                cout << "Opponent didn't accept rematch!" << endl;
+                                break;
+                            }
+                            
+                            BoundingBox box = detectQuestionRegion(false);
+                            
+                            if(box.found) {
+                                cout << "Opponent accepted rematch! Starting bot..." << endl;
+                                opponentAccepted = true;
+                                break;
+                            }
+                            
+                            this_thread::sleep_for(chrono::milliseconds(500));
+                        }
+
+                        if (!opponentAccepted) {
+                            system("open -a 'Visual Studio Code'");
+                            cout << "\n1. Rematch \n2. New game \n3. Exit\n";
+                            cin >> val;
+                            system("open -a 'Google Chrome'");
+                            this_thread::sleep_for(chrono::milliseconds(1000));
+                        }
+                    }
+                    else{
+                        if(newGameXY[1].first == -1 || newGameXY[1].second == -1) break;
+                        string cmd = "cliclick c:" + to_string(newGameXY[1].first) + "," + to_string(newGameXY[1].second);
+                        system(cmd.c_str());
+                        system(cmd.c_str());
+                        opponentAccepted = true;
+                    }
+                }
+                else cout<<"Invalid choice!"<<endl;
+            } while(val == 1 || val == 2);
             break;
+            
         case 3: cout << "Bot for this mode is coming soon!" << endl; break;
         case 4: cout << "Bot for this mode is coming soon!" << endl; break;
         case 5: cout << "Bot for this mode is coming soon!" << endl; break;
@@ -310,6 +513,8 @@ int main() {
         case 7: cout << "Bot for this mode is coming soon!" << endl; break;
         case 8: cout << "Bot for this mode is coming soon!" << endl; break;
     }
+
+    cout << "Game Ended\n";
 
     return 0;
 }
