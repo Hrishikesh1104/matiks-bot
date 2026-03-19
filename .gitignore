@@ -1,0 +1,18 @@
+# Generated image files
+question.png
+question_large.png
+fullscreen.png
+question_contrast.png
+
+# OCR output files
+output.txt
+fulloutput.tsv
+
+# Compiled binary
+bot
+
+# macOS system files
+.DS_Store
+
+# VS Code files
+.vscode/
