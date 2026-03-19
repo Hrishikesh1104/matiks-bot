@@ -29,9 +29,49 @@ void MatiksBot::clearInput() {
     system("osascript -e 'tell application \"System Events\" to key code 51'");
 }
 
+bool MatiksBot::shouldMakeError() {
+    return (rand() % 10) == 0;
+}
+
+string MatiksBot::generateWrongAnswer(string &correctAnswer) {
+    int correct = stoi(correctAnswer);
+    
+    int error = (rand() % 10) + 1;
+    
+    if (rand() % 2 == 0) correct += error;
+    else correct -= error;
+    
+    return to_string(correct);
+}
+
+void MatiksBot::humanReactionDelay() {
+    int delay = 150 + (rand() % 250);
+    this_thread::sleep_for(chrono::milliseconds(delay));
+}
+
 void MatiksBot::typeAnswer(string answer) {
-    string command = "osascript -e 'tell application \"System Events\" to keystroke \"" + answer + "\"'";
-    system(command.c_str());
+    for (int i = 0; i < answer.size(); i++) {
+        // ~7% chance of making a typo
+        if (rand() % 15 == 0) {
+            // type a random wrong character
+            char wrongChar = '0' + (rand() % 10);
+            string wrongCmd = "osascript -e 'tell application \"System Events\" to keystroke \"" + string(1, wrongChar) + "\"'";
+            system(wrongCmd.c_str());
+
+            this_thread::sleep_for(chrono::milliseconds(100 + rand() % 150));
+
+            // backspace
+            system("osascript -e 'tell application \"System Events\" to key code 51'");
+        }
+
+        // type correct character
+        string cmd = "osascript -e 'tell application \"System Events\" to keystroke \"" + string(1, answer[i]) + "\"'";
+        system(cmd.c_str());
+
+        // random delay between characters
+        int charDelay = 200 + (rand() % 100);
+        this_thread::sleep_for(chrono::milliseconds(charDelay));
+    }
 }
 
 void MatiksBot::switchToVSCode() {

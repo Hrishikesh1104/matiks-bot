@@ -28,6 +28,9 @@ public:
     void takeScreenshot();
     void runOCR();
     void clearInput();
+    bool shouldMakeError();
+    string generateWrongAnswer(string &correctAnswer);
+    void humanReactionDelay();
     void typeAnswer(string answer);
     void switchToVSCode();
     void switchToChrome();

@@ -37,6 +37,33 @@ vector<string> MathBot::readOCROutput() {
     return lines;
 }
 
+int MathBot::calculateDelay(vector<string> &lines) {
+    int delay = 800;
+    delay += (lines.size() - 1) * 200;
+    
+    for (int i = 0; i < lines.size(); i++) {
+        string line = lines[i];
+        if (i == 0) {
+            delay += line.size() * 100;
+        } 
+        else {
+            string num = line.substr(1);
+            delay += num.size() * 100;
+        }
+    }
+
+    if(lines.size() == 2 && lines[1][0] == 'x') delay += 1200;
+    else if(lines.size() == 2 && lines[1][0] == '+') delay = 700;
+
+    int noise = (rand() % 1400) - 500;
+    delay += noise;
+
+    delay = max(delay, 600);
+    cout << "Delay: " << delay << "ms" << endl;
+
+    return delay;
+}
+
 string MathBot::solve(vector<string> lines, int& sameQuestionCount) {
     int answer = stoi(lines[0]);
 
@@ -88,27 +115,44 @@ void MathBot::runBot() {
 
         if (lines.empty()) continue;
 
-        if (lines == lastLines) {
-            sameQuestionCount++;
-        } else {
+        if (lines == lastLines) sameQuestionCount++;
+        else {
             sameQuestionCount = 0;
             lastLines = lines;
         }
 
-        if (sameQuestionCount >= 1) {
+        int delay = calculateDelay(lines);
+
+        if (sameQuestionCount >= 3) {
             string answer = solve(lines, sameQuestionCount);
             clearInput();
+            humanReactionDelay();
             typeAnswer(answer);
             sameQuestionCount = 0;
             lastLines.clear();
-            this_thread::sleep_for(chrono::milliseconds(2600));
+            this_thread::sleep_for(chrono::milliseconds(delay));
             continue;
         }
 
         string answer = solve(lines, sameQuestionCount);
-        clearInput();
-        typeAnswer(answer);
+        if (shouldMakeError()) {
+            string wrongAnswer = generateWrongAnswer(answer);
+            cout << "Making intentional error: " << wrongAnswer << endl;
+            clearInput();
+            humanReactionDelay();
+            typeAnswer(wrongAnswer);
+            this_thread::sleep_for(chrono::milliseconds(500));
+
+            clearInput();
+            humanReactionDelay();
+            typeAnswer(answer);
+        } 
+        else {
+            clearInput();
+            humanReactionDelay();
+            typeAnswer(answer);
+        }
         cout << ": Answer = " << answer << endl;
-        this_thread::sleep_for(chrono::milliseconds(2600));
+        this_thread::sleep_for(chrono::milliseconds(delay));
     }
 }
