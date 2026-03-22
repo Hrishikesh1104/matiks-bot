@@ -38,7 +38,7 @@ vector<string> MathBot::readOCROutput() {
 }
 
 int MathBot::calculateDelay(vector<string> &lines) {
-    int delay = 800;
+    int delay = 500;
     delay += (lines.size() - 1) * 200;
     
     for (int i = 0; i < lines.size(); i++) {

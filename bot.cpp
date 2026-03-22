@@ -1,5 +1,5 @@
 #include "MathBot.h"
-#include "MindSnapBot.h"
+#include "FlashAnzanBot.h"
 
 void runLauncher() {
     cout << "\n=============================\n";
@@ -38,7 +38,12 @@ void runLauncher() {
     switch (choice) {
         case 1: bot = new MathBot(); break;
         case 2: bot = new MathBot(); break;
-        case 7: bot = new MindSnapBot(); break;
+        case 6: {
+            FlashAnzanBot* fb = new FlashAnzanBot();
+            fb->getUserSettings();  
+            bot = fb;
+            break;
+        }
         default:
             cout << "Bot for this mode is coming soon!" << endl;
             return;

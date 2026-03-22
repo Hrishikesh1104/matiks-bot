@@ -82,11 +82,15 @@ void MatiksBot::switchToChrome() {
     system("open -a 'Google Chrome'");
 }
 
-BoundingBox MatiksBot::detectQuestionRegion(bool updateCancel) {
+void MatiksBot::generateTSV(){
     system("screencapture fullscreen.png");
     system("tesseract fullscreen.png fulloutput tsv 2>/dev/null");
+}
 
-    ifstream file("fulloutput.tsv");
+BoundingBox MatiksBot::detectQuestionRegion(bool updateCancel) {
+    generateTSV();
+
+    std::ifstream file("fulloutput.tsv");
     if (!file.is_open()) {
         cout << "ERROR: Could not open fulloutput.tsv!" << endl;
         return {0, 0, 0, 0, false};

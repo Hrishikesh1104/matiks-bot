@@ -34,6 +34,7 @@ public:
     void typeAnswer(string answer);
     void switchToVSCode();
     void switchToChrome();
+    void generateTSV();
     BoundingBox detectQuestionRegion(bool updateCancel = true);
     vector<pair<int,int>> decideNextGame();
     void runGameLoop();
